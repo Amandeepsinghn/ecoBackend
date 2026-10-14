@@ -5,6 +5,29 @@ import { inputClass, labelClass, primaryButton } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+function buildCreateFormData(form: HTMLFormElement) {
+  const raw = new FormData(form);
+  const data = new FormData();
+
+  data.set("name", String(raw.get("name") ?? "").trim());
+  data.set("price", String(raw.get("price") ?? ""));
+  data.set("stock", String(raw.get("stock") ?? ""));
+
+  const description = String(raw.get("description") ?? "").trim();
+  if (description) data.set("description", description);
+
+  const productType = String(raw.get("product_type") ?? "").trim();
+  if (productType) data.set("product_type", productType);
+
+  for (const entry of raw.getAll("files")) {
+    if (entry instanceof File && entry.size > 0) {
+      data.append("files", entry);
+    }
+  }
+
+  return data;
+}
+
 export function ProductCreateForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -12,20 +35,11 @@ export function ProductCreateForm() {
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const description = String(form.get("description") ?? "").trim();
-    const productType = String(form.get("product_type") ?? "").trim();
     setPending(true);
     setError(null);
 
     try {
-      const product = await createProduct({
-        name: String(form.get("name") ?? ""),
-        price: Number(form.get("price")),
-        stock: Number(form.get("stock")),
-        description: description || null,
-        product_type: productType || null,
-      });
+      const product = await createProduct(buildCreateFormData(event.currentTarget));
       router.push(`/admin/products/${product.id}`);
     } catch (caught) {
       setError(errorMessage(caught));
@@ -34,7 +48,11 @@ export function ProductCreateForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-md flex-col gap-4 rounded-[28px] bg-soft p-6 sm:p-8">
+    <form
+      onSubmit={onSubmit}
+      encType="multipart/form-data"
+      className="flex w-full max-w-md flex-col gap-4 rounded-[24px] bg-soft p-5 sm:rounded-[28px] sm:p-8"
+    >
       <label className={labelClass}>
         <span>Name</span>
         <input required name="name" className={inputClass} />
@@ -49,13 +67,23 @@ export function ProductCreateForm() {
       </label>
       <label className={labelClass}>
         <span>Type</span>
-        <input name="product_type" className={inputClass} />
+        <input name="product_type" placeholder="e.g. clothing" className={inputClass} />
       </label>
       <label className={labelClass}>
         <span>Description</span>
         <textarea name="description" rows={4} className={`${inputClass} h-auto py-2`} />
       </label>
-      <button type="submit" disabled={pending} className={primaryButton}>
+      <label className={labelClass}>
+        <span>Photos</span>
+        <input
+          type="file"
+          name="files"
+          accept="image/*"
+          multiple
+          className="block w-full text-sm text-muted file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-foreground"
+        />
+      </label>
+      <button type="submit" disabled={pending} className={`${primaryButton} sm:w-full`}>
         {pending ? "Creating…" : "Create product"}
       </button>
       {error ? <p className="text-sm text-accent">{error}</p> : null}

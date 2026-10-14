@@ -75,6 +75,7 @@ export type Order = {
   items: OrderItem[];
 };
 
+/** Fields for multipart POST /admin/products (plus optional `files`). */
 export type AdminProductCreate = {
   name: string;
   stock: number;

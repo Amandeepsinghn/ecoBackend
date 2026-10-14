@@ -1,7 +1,6 @@
 import { api } from "@/lib/api/client";
 import { paths } from "@/lib/api/paths";
 import type {
-  AdminProductCreate,
   AdminProductUpdate,
   AdminRoleUpdate,
   AdminStockUpdate,
@@ -22,10 +21,11 @@ export async function getAdminProducts() {
   return api<Product[]>(paths.admin.products, { token: requireToken() });
 }
 
-export async function createProduct(body: AdminProductCreate) {
+/** POST /admin/products — multipart form (JSON create no longer works). */
+export async function createProduct(formData: FormData) {
   return api<Product>(paths.admin.products, {
     method: "POST",
-    body,
+    formData,
     token: requireToken(),
   });
 }
