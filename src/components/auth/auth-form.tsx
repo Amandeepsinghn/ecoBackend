@@ -9,9 +9,16 @@ import { useState } from "react";
 
 type AuthMode = "login" | "register";
 
+function initialLoginNotice(mode: AuthMode) {
+  if (mode !== "login" || typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("expired") === "1"
+    ? "Session expired. Sign in again."
+    : null;
+}
+
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(() => initialLoginNotice(mode));
   const [pending, setPending] = useState(false);
   const isRegister = mode === "register";
 

@@ -52,6 +52,18 @@ export function clearSession() {
   window.dispatchEvent(new Event(sessionEvent));
 }
 
+/** Clear the session and send the user to sign in (e.g. expired token). */
+export function signOutToLogin(reason: "expired" | "signed-out" = "expired") {
+  if (typeof window === "undefined") return;
+  clearSession();
+  const path = window.location.pathname;
+  if (path === "/login" || path === "/register") return;
+  const params = new URLSearchParams();
+  if (reason === "expired") params.set("expired", "1");
+  const qs = params.toString();
+  window.location.assign(qs ? `/login?${qs}` : "/login");
+}
+
 function subscribe(onStoreChange: () => void) {
   const onStorage = (event: StorageEvent) => {
     if (event.key !== storageKey) return;

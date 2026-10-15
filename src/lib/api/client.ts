@@ -1,4 +1,5 @@
 import { apiBaseUrl } from "@/lib/config";
+import { signOutToLogin } from "@/lib/auth/session";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -40,6 +41,10 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   const data = text.length > 0 ? parseJson(text) : null;
 
   if (!response.ok) {
+    // Authenticated call rejected — token expired / invalid. Kick to sign in.
+    if (response.status === 401 && token) {
+      signOutToLogin("expired");
+    }
     const message = readErrorMessage(data) ?? (response.statusText || "Request failed");
     throw new ApiError(message, response.status, data);
   }
